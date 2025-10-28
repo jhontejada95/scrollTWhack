@@ -6,9 +6,10 @@ import { CONTRACT_ADDRESS } from '../lib/contract';
 interface BlockchainVerificationProps {
   hash: string;
   timestamp: string;
+  txHash?: string;
 }
 
-export function BlockchainVerification({ hash, timestamp }: BlockchainVerificationProps) {
+export function BlockchainVerification({ hash, timestamp, txHash }: BlockchainVerificationProps) {
   const [verifying, setVerifying] = useState(false);
   const [verified, setVerified] = useState(false);
   const [verificationData, setVerificationData] = useState<any>(null);
@@ -60,7 +61,29 @@ export function BlockchainVerification({ hash, timestamp }: BlockchainVerificati
             {isContractDeployed && (
               <div className="flex items-center gap-2">
                 <Check className="text-[#4CC9A0] w-4 h-4" />
-                <span className="text-gray-700">Contrato: {CONTRACT_ADDRESS.substring(0, 10)}...</span>
+                <a
+                  href={`https://sepolia.scrollscan.com/address/${CONTRACT_ADDRESS}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[#9B6BFF] hover:underline flex items-center gap-1"
+                >
+                  Contrato: {CONTRACT_ADDRESS.substring(0, 10)}...
+                  <ExternalLink className="w-3 h-3" />
+                </a>
+              </div>
+            )}
+            {txHash && (
+              <div className="flex items-center gap-2">
+                <Check className="text-[#4CC9A0] w-4 h-4" />
+                <a
+                  href={`https://sepolia.scrollscan.com/tx/${txHash}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[#9B6BFF] hover:underline flex items-center gap-1"
+                >
+                  Ver transacción
+                  <ExternalLink className="w-3 h-3" />
+                </a>
               </div>
             )}
           </div>

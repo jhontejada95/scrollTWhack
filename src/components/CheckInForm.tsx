@@ -124,6 +124,7 @@ export function CheckInForm() {
             <BlockchainVerification
               hash={todayCheckIn.blockchain_hash}
               timestamp={todayCheckIn.created_at}
+              txHash={todayCheckIn.blockchain_tx_hash}
             />
           )}
         </div>
