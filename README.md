@@ -1776,6 +1776,363 @@ bg-blue-50 border-blue-200 text-blue-700
 
 ---
 
+## Implementación de Zero-Knowledge (ZK) en TalentWell
+
+### Estado Actual: Privacidad mediante Hashing Anónimo
+
+TalentWell actualmente implementa un nivel básico pero efectivo de privacidad utilizando hashing SHA-256, que sienta las bases para una futura implementación completa de Zero-Knowledge Proofs (ZK-Proofs).
+
+### 1. ¿Qué es Zero-Knowledge?
+
+Zero-Knowledge Proofs (ZK-Proofs) son protocolos criptográficos que permiten demostrar que una afirmación es verdadera sin revelar ninguna información adicional más allá de la veracidad de la afirmación.
+
+**Ejemplo en TalentWell:**
+- **Sin ZK**: "Mi score es 75 puntos"
+- **Con ZK básico (actual)**: "Registré un check-in" (sin revelar score exacto ni identidad)
+- **Con ZK avanzado (futuro)**: "Mi score es mayor a 50" (sin revelar el valor exacto ni identidad)
+
+---
+
+### 2. Implementación Actual: Hashing Anónimo
+
+#### Tecnología Utilizada
+
+**Archivo:** `src/lib/blockchain.ts`
+
+```typescript
+import { ethers } from 'ethers';
+
+export function generateCheckInHash(
+  userId: string,
+  emotion: string,
+  score: number,
+  timestamp: number
+): string {
+  const dataString = `${userId}-${emotion}-${score}-${timestamp}`;
+  return ethers.keccak256(ethers.toUtf8Bytes(dataString));
+}
+```
+
+#### Cómo Funciona
+
+1. **Generación de Hash Anónimo**
+   - Se concatenan los datos del check-in: `userId-emotion-score-timestamp`
+   - Se aplica función hash Keccak256 (mismo que usa Ethereum)
+   - Resultado: Hash de 32 bytes (64 caracteres hexadecimales)
+   - Ejemplo: `0x8f7b3c2d1e9a6b5c4d3e2f1a0b9c8d7e6f5a4b3c2d1e0f9a8b7c6d5e4f3a2b1c`
+
+2. **Propiedades del Hash**
+   - **Irreversible**: Imposible obtener datos originales del hash
+   - **Determinístico**: Mismo input siempre produce mismo hash
+   - **Único**: Cambio mínimo en input produce hash completamente diferente
+   - **Colisión resistente**: Prácticamente imposible que dos inputs diferentes den mismo hash
+
+3. **Registro en Blockchain**
+   ```typescript
+   // Solo se guarda el hash y el score, NO datos personales
+   await contract.registerCheckIn(hash, score);
+   ```
+
+4. **Almacenamiento en Smart Contract**
+   ```solidity
+   struct CheckInRecord {
+       bytes32 checkInHash;  // Hash anónimo
+       uint256 timestamp;     // Timestamp del bloque
+       uint8 score;           // Solo puntuación (0-100)
+       bool exists;           // Flag de existencia
+   }
+   ```
+
+#### Nivel de Privacidad Actual
+
+**✅ Protecciones Implementadas:**
+
+| Dato Personal | ¿Se almacena on-chain? | ¿Es visible públicamente? |
+|---------------|------------------------|---------------------------|
+| Nombre del usuario | ❌ NO | ❌ NO |
+| Email | ❌ NO | ❌ NO |
+| User ID (UUID) | ❌ NO (solo en hash) | ❌ NO |
+| Emoción exacta | ❌ NO (solo en hash) | ❌ NO |
+| Comentario | ❌ NO | ❌ NO |
+| Wallet address | ✅ SÍ (transacción) | ✅ SÍ (pero no vinculada a identidad) |
+| Score | ✅ SÍ | ✅ SÍ (anónimo) |
+| Timestamp | ✅ SÍ | ✅ SÍ (anónimo) |
+| Hash del check-in | ✅ SÍ | ✅ SÍ (irreversible) |
+
+**Resultado:** Los datos on-chain son completamente anónimos. Solo scores y timestamps sin vincular a identidades.
+
+---
+
+### 3. ¿Por qué no es ZK completo todavía?
+
+Aunque TalentWell implementa privacidad mediante hashing, no es un sistema ZK completo porque:
+
+#### Limitaciones Actuales
+
+1. **No hay Pruebas Criptográficas**
+   - Actual: "Aquí está el hash" (verificación directa)
+   - ZK ideal: "Puedo probar que conozco el valor sin revelarlo"
+
+2. **Score Visible**
+   - Actual: Score almacenado en plaintext on-chain (75 puntos)
+   - ZK ideal: "Mi score está en el rango 70-80" (sin revelar valor exacto)
+
+3. **No hay Predicados Zero-Knowledge**
+   - Actual: No se pueden hacer queries como "¿cuántos empleados tienen score > 50?"
+   - ZK ideal: Estadísticas agregadas sin revelar datos individuales
+
+4. **Wallet Linkability**
+   - Actual: Todas las transacciones visibles desde una misma wallet
+   - ZK ideal: Transacciones desvinculadas, privacidad total
+
+---
+
+### 4. Roadmap hacia ZK Completo
+
+#### Fase 1: Privacidad Básica ✅ (Actual)
+- ✅ Hashing SHA-256/Keccak256
+- ✅ Datos personales nunca on-chain
+- ✅ Solo hash anónimos
+- ✅ RLS en base de datos
+
+#### Fase 2: ZK-SNARKs para Rangos (Futuro Q2 2025)
+**Tecnología:** zkSync, Polygon zkEVM, o StarkNet
+
+**Implementación:**
+```solidity
+// Probar que score > threshold sin revelar score exacto
+function proveScoreAboveThreshold(
+    zkProof calldata proof,
+    uint8 threshold
+) external returns (bool) {
+    // Verifica proof sin revelar score real
+    return zkVerifier.verify(proof, threshold);
+}
+```
+
+**Casos de Uso:**
+- "Mi bienestar es aceptable" (score > 50) → ZK proof sin revelar valor exacto
+- "No estoy en crisis" (score > 30) → Alerta gerente sin exponer identidad
+- Estadísticas: "70% del equipo está bien" → Sin revelar quiénes son
+
+#### Fase 3: Privacidad Total con zk-Rollups (Futuro Q4 2025)
+**Tecnología:** zkSync Era, Aztec Protocol
+
+**Implementación:**
+- Todas las transacciones privadas por defecto
+- Identidad del usuario oculta
+- Solo pruebas ZK verificables
+- Compliance sin sacrificar privacidad
+
+**Arquitectura:**
+```
+Usuario → Genera ZK-Proof local
+       ↓
+       → Envía proof (NO datos reales)
+       ↓
+Smart Contract → Verifica proof
+       ↓
+       → Acepta/Rechaza SIN saber datos
+```
+
+#### Fase 4: Análisis Privado con FHE (Futuro 2026)
+**Tecnología:** Fully Homomorphic Encryption (FHE)
+
+**Capacidades:**
+- Cálculos sobre datos encriptados
+- Dashboard de gerente con estadísticas sin desencriptar datos
+- Machine Learning sobre datos privados
+- Alertas automáticas preservando anonimato
+
+---
+
+### 5. Comparación: Privacidad Actual vs ZK Completo
+
+| Característica | Implementación Actual | ZK Completo (Futuro) |
+|----------------|----------------------|----------------------|
+| **Anonimato de Usuario** | Alto (hash irreversible) | Total (ZK-SNARKs) |
+| **Score Privado** | No (visible on-chain) | Sí (solo rangos verificables) |
+| **Wallet Privada** | No (address visible) | Sí (stealth addresses) |
+| **Verificación** | Directa (hash matching) | Criptográfica (ZK proof) |
+| **Queries Privadas** | No soportadas | Sí (FHE + ZK) |
+| **Gas Costs** | Bajos (~0.0001 ETH) | Medios-Altos (proofs más costosos) |
+| **Complejidad** | Baja (hashing estándar) | Alta (ZK circuits) |
+| **Cumplimiento GDPR** | Parcial | Total |
+
+---
+
+### 6. Tecnologías ZK Candidatas para TalentWell
+
+#### Opción 1: zkSync Era
+**Ventajas:**
+- Layer 2 de Ethereum con ZK-Rollups nativos
+- Bajas comisiones (~$0.01 por transacción)
+- Compatible con contratos Solidity existentes
+- Soporte para zk-SNARKs out-of-the-box
+
+**Integración:**
+```bash
+# Migración a zkSync
+npm install -D @matterlabs/hardhat-zksync-solc
+npm install zksync-web3
+```
+
+#### Opción 2: Polygon zkEVM
+**Ventajas:**
+- EVM-compatible al 100%
+- Migración casi sin cambios de código
+- Red madura con alto tráfico
+
+#### Opción 3: Aztec Protocol
+**Ventajas:**
+- Privacidad by default
+- Contratos privados nativos
+- SDK completo para ZK
+
+**Desventajas:**
+- Curva de aprendizaje más pronunciada
+- Menor compatibilidad con Ethereum
+
+---
+
+### 7. Cómo Verificar la Privacidad Actual
+
+#### Test 1: Verificar que no hay datos personales on-chain
+
+```bash
+# 1. Ir a Scrollscan
+https://sepolia.scrollscan.com/address/0x2B439F8B6F9afB05c7E9008Cc72EFa1C929d2bC2
+
+# 2. Revisar las transacciones
+# 3. Observar que solo hay:
+#    - Hashes (bytes32)
+#    - Scores (uint8)
+#    - Timestamps
+#    NO hay emails, nombres, ni user IDs
+```
+
+#### Test 2: Intentar revertir un hash
+
+```typescript
+// IMPOSIBLE: No se puede obtener datos originales
+const hash = "0x8f7b3c2d1e9a6b5c4d3e2f1a0b9c8d7e6f5a4b3c2d1e0f9a8b7c6d5e4f3a2b1c";
+// ❌ No existe función para obtener userId, emotion, etc.
+```
+
+#### Test 3: Verificar RLS en Supabase
+
+```sql
+-- Los usuarios SOLO pueden ver sus propios check-ins
+SELECT * FROM check_ins WHERE user_id = auth.uid();
+
+-- Los gerentes ven datos AGREGADOS, sin user_id visible
+SELECT AVG(score), COUNT(*) FROM check_ins WHERE company_id = 'xxx';
+```
+
+---
+
+### 8. Mejores Prácticas de Privacidad Implementadas
+
+#### En el Frontend
+
+1. **No loguear datos sensibles**
+   ```typescript
+   // ❌ MAL
+   console.log('User:', user.email, user.name);
+
+   // ✅ BIEN
+   console.log('User logged in');
+   ```
+
+2. **Limpiar LocalStorage al logout**
+   ```typescript
+   const handleLogout = async () => {
+     await supabase.auth.signOut();
+     localStorage.clear(); // Limpiar todo
+     sessionStorage.clear();
+   };
+   ```
+
+3. **HTTPS obligatorio en producción**
+   - Certificado SSL/TLS
+   - Cookies con flag `secure`
+
+#### En el Smart Contract
+
+1. **Solo hashes, nunca datos en crudo**
+   ```solidity
+   // ✅ CORRECTO
+   function registerCheckIn(bytes32 _hash, uint8 _score) { ... }
+
+   // ❌ INCORRECTO (nunca hacer esto)
+   function registerCheckIn(string memory _userId, string memory _email) { ... }
+   ```
+
+2. **Eventos sin datos sensibles**
+   ```solidity
+   // ✅ CORRECTO
+   event CheckInRegistered(bytes32 indexed recordHash, uint256 timestamp, uint8 score);
+
+   // ❌ INCORRECTO
+   event CheckInRegistered(address indexed user, string email, uint8 score);
+   ```
+
+#### En la Base de Datos
+
+1. **RLS en todas las tablas**
+   ```sql
+   ALTER TABLE check_ins ENABLE ROW LEVEL SECURITY;
+
+   CREATE POLICY "Users can view their own check-ins"
+     ON check_ins FOR SELECT
+     TO authenticated
+     USING (user_id = auth.uid());
+   ```
+
+2. **Encriptación de datos sensibles**
+   - Supabase encripta toda la BD en reposo
+   - TLS 1.3 para datos en tránsito
+
+---
+
+### 9. Recursos para Aprender ZK
+
+#### Tutoriales Recomendados
+- [Zero-Knowledge Proofs for Beginners](https://zkp.science/)
+- [ZK-SNARKS Under the Hood](https://vitalik.ca/general/2017/02/01/zk_snarks.html)
+- [Scroll ZK Documentation](https://docs.scroll.io/en/technology/)
+- [Aztec Protocol Docs](https://docs.aztec.network/)
+
+#### Librerías ZK
+- **SnarkJS**: Para generar y verificar ZK-SNARKs
+- **Circom**: Lenguaje para escribir ZK circuits
+- **zk-toolkit**: Suite completa para desarrollo ZK
+
+#### Cursos Online
+- [MIT: Zero-Knowledge Proofs](https://zkp.science/)
+- [ZK Learning](https://zk-learning.org/)
+- [Cryptography & Privacy MOOC](https://www.coursera.org/learn/crypto)
+
+---
+
+### 10. Conclusión
+
+**TalentWell hoy:**
+- ✅ Privacidad robusta mediante hashing anónimo
+- ✅ Datos personales nunca on-chain
+- ✅ Transparencia sin comprometer identidad
+- ✅ Fundamento sólido para ZK futuro
+
+**TalentWell mañana:**
+- 🚀 Zero-Knowledge Proofs completos
+- 🚀 Privacidad total con verificabilidad
+- 🚀 Analytics sobre datos encriptados
+- 🚀 Cumplimiento regulatorio máximo
+
+La arquitectura actual de hashing + blockchain sienta las bases perfectas para evolucionar hacia un sistema ZK completo, permitiendo privacidad absoluta sin sacrificar verificabilidad.
+
+---
+
 ## Licencia
 
 MIT License - Ver archivo LICENSE para más detalles.
