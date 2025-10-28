@@ -30,6 +30,7 @@ export interface CheckIn {
   score: number;
   comment: string;
   blockchain_hash: string;
+  blockchain_tx_hash: string | null;
   created_at: string;
   date: string;
 }

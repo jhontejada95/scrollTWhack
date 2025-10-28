@@ -28,7 +28,7 @@ export function ActivationFlow() {
         return;
       }
 
-      const managerCodes = ['MANAGER2025', 'ADMIN2025', 'LEADER2025'];
+      const managerCodes = ['METRICS2025', 'DASHBOARD2025', 'REPORTS2025', 'ADMIN2025', 'LEADER2025'];
       const isManagerCode = managerCodes.includes(code.toUpperCase());
 
       const { error: userError } = await supabase
@@ -105,7 +105,7 @@ export function ActivationFlow() {
               <CheckCircle className="text-[#4CC9A0] w-5 h-5 flex-shrink-0 mt-0.5" />
               <div className="text-sm text-gray-700">
                 <p className="font-medium mb-1">Códigos de empleado:</p>
-                <p className="text-[#6C757D]">WELLBEING2025, MINDFUL24, HEALTH2025</p>
+                <p className="text-[#6C757D]">CARE2025, FLOURISH24, HAPPY2025</p>
               </div>
             </div>
           </div>
@@ -115,7 +115,7 @@ export function ActivationFlow() {
               <CheckCircle className="text-blue-600 w-5 h-5 flex-shrink-0 mt-0.5" />
               <div className="text-sm text-gray-700">
                 <p className="font-medium mb-1">Códigos de gerente (acceso a analytics):</p>
-                <p className="text-blue-700 font-semibold">MANAGER2025, ADMIN2025, LEADER2025</p>
+                <p className="text-blue-700 font-semibold">METRICS2025, DASHBOARD2025, REPORTS2025</p>
               </div>
             </div>
           </div>

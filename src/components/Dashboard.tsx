@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase, CheckIn } from '../lib/supabase';
-import { TrendingUp, TrendingDown, Users, AlertTriangle, Activity, Calendar } from 'lucide-react';
+import { TrendingUp, TrendingDown, Users, AlertTriangle, Activity, Calendar, ExternalLink } from 'lucide-react';
+import { CONTRACT_ADDRESS } from '../lib/contract';
 
 interface DashboardStats {
   totalCheckIns: number;
@@ -216,30 +217,67 @@ export function Dashboard() {
             stats.recentCheckIns.map((checkIn) => (
               <div
                 key={checkIn.id}
-                className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:border-[#9B6BFF] transition"
+                className="p-4 border border-gray-200 rounded-lg hover:border-[#9B6BFF] transition"
               >
-                <div className="flex-1">
-                  <div className="flex items-center gap-3">
-                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${getScoreColor(checkIn.score)}`}>
-                      {getEmotionLabel(checkIn.emotion)}
-                    </span>
-                    <span className="text-sm text-[#6C757D]">
-                      {new Date(checkIn.created_at).toLocaleDateString('es-ES', {
-                        day: 'numeric',
-                        month: 'short',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
-                    </span>
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3">
+                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${getScoreColor(checkIn.score)}`}>
+                        {getEmotionLabel(checkIn.emotion)}
+                      </span>
+                      <span className="text-sm text-[#6C757D]">
+                        {new Date(checkIn.created_at).toLocaleDateString('es-ES', {
+                          day: 'numeric',
+                          month: 'short',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </span>
+                    </div>
+                    {checkIn.comment && (
+                      <p className="text-sm text-gray-700 mt-2 italic">"{checkIn.comment}"</p>
+                    )}
                   </div>
-                  {checkIn.comment && (
-                    <p className="text-sm text-gray-700 mt-2 italic">"{checkIn.comment}"</p>
-                  )}
+                  <div className="text-right">
+                    <p className="text-2xl font-bold text-gray-900">{checkIn.score}</p>
+                    <p className="text-xs text-[#6C757D]">puntos</p>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-2xl font-bold text-gray-900">{checkIn.score}</p>
-                  <p className="text-xs text-[#6C757D]">puntos</p>
-                </div>
+
+                {checkIn.blockchain_hash && (
+                  <div className="mt-3 pt-3 border-t border-gray-100">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs text-[#6C757D] mb-1">Hash Blockchain:</p>
+                        <p className="text-xs font-mono text-gray-700 truncate">
+                          {checkIn.blockchain_hash.substring(0, 20)}...
+                        </p>
+                      </div>
+                      <div className="flex gap-2 flex-shrink-0">
+                        {checkIn.blockchain_tx_hash && (
+                          <a
+                            href={`https://sepolia.scrollscan.com/tx/${checkIn.blockchain_tx_hash}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-1 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition text-xs font-medium"
+                          >
+                            <ExternalLink className="w-3 h-3" />
+                            Ver Tx
+                          </a>
+                        )}
+                        <a
+                          href={`https://sepolia.scrollscan.com/address/${CONTRACT_ADDRESS}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-1 px-3 py-1.5 bg-[#9B6BFF]/10 text-[#9B6BFF] rounded-lg hover:bg-[#9B6BFF]/20 transition text-xs font-medium"
+                        >
+                          <ExternalLink className="w-3 h-3" />
+                          Contrato
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             ))
           )}

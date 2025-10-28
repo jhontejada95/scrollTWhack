@@ -72,13 +72,13 @@ export function AuthForm() {
                 <h3 className="font-bold text-gray-900 mb-3">Códigos de empleado:</h3>
                 <div className="space-y-2">
                   <div className="bg-white rounded-lg p-3 font-mono text-sm text-center border-2 border-dashed border-[#9B6BFF]">
-                    WELLBEING2025
+                    CARE2025
                   </div>
                   <div className="bg-white rounded-lg p-3 font-mono text-sm text-center border-2 border-dashed border-[#9B6BFF]">
-                    MINDFUL24
+                    FLOURISH24
                   </div>
                   <div className="bg-white rounded-lg p-3 font-mono text-sm text-center border-2 border-dashed border-[#9B6BFF]">
-                    HEALTH2025
+                    HAPPY2025
                   </div>
                 </div>
               </div>
@@ -87,13 +87,13 @@ export function AuthForm() {
                 <h3 className="font-bold text-blue-900 mb-3">Códigos de gerente (Dashboard Analytics):</h3>
                 <div className="space-y-2">
                   <div className="bg-white rounded-lg p-3 font-mono text-sm text-center border-2 border-dashed border-blue-500 font-bold text-blue-700">
-                    MANAGER2025
+                    METRICS2025
                   </div>
                   <div className="bg-white rounded-lg p-3 font-mono text-sm text-center border-2 border-dashed border-blue-500 font-bold text-blue-700">
-                    ADMIN2025
+                    DASHBOARD2025
                   </div>
                   <div className="bg-white rounded-lg p-3 font-mono text-sm text-center border-2 border-dashed border-blue-500 font-bold text-blue-700">
-                    LEADER2025
+                    REPORTS2025
                   </div>
                 </div>
               </div>
