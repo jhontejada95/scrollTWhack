@@ -28,13 +28,16 @@ export function ActivationFlow() {
         return;
       }
 
+      const managerCodes = ['MANAGER2025', 'ADMIN2025', 'LEADER2025'];
+      const isManagerCode = managerCodes.includes(code.toUpperCase());
+
       const { error: userError } = await supabase
         .from('users')
         .upsert({
           id: session?.user.id,
           email: session?.user.email,
           company_id: activationCode.company_id,
-          role: 'employee',
+          role: isManagerCode ? 'manager' : 'employee',
         });
 
       if (userError) throw userError;
@@ -96,12 +99,24 @@ export function ActivationFlow() {
           </button>
         </form>
 
-        <div className="mt-6 bg-gradient-to-r from-[#9B6BFF]/10 to-[#4CC9A0]/10 p-4 rounded-lg">
-          <div className="flex items-start gap-2">
-            <CheckCircle className="text-[#4CC9A0] w-5 h-5 flex-shrink-0 mt-0.5" />
-            <div className="text-sm text-gray-700">
-              <p className="font-medium mb-1">Códigos de demo disponibles:</p>
-              <p className="text-[#6C757D]">DEMO2025, TALENT01, WELLNESS99</p>
+        <div className="mt-6 space-y-3">
+          <div className="bg-gradient-to-r from-[#9B6BFF]/10 to-[#4CC9A0]/10 p-4 rounded-lg">
+            <div className="flex items-start gap-2">
+              <CheckCircle className="text-[#4CC9A0] w-5 h-5 flex-shrink-0 mt-0.5" />
+              <div className="text-sm text-gray-700">
+                <p className="font-medium mb-1">Códigos de empleado:</p>
+                <p className="text-[#6C757D]">WELLBEING2025, MINDFUL24, HEALTH2025</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-gradient-to-r from-blue-500/10 to-[#9B6BFF]/10 p-4 rounded-lg border border-blue-200">
+            <div className="flex items-start gap-2">
+              <CheckCircle className="text-blue-600 w-5 h-5 flex-shrink-0 mt-0.5" />
+              <div className="text-sm text-gray-700">
+                <p className="font-medium mb-1">Códigos de gerente (acceso a analytics):</p>
+                <p className="text-blue-700 font-semibold">MANAGER2025, ADMIN2025, LEADER2025</p>
+              </div>
             </div>
           </div>
         </div>

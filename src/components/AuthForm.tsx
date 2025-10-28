@@ -67,17 +67,34 @@ export function AuthForm() {
             </div>
 
             {/* Códigos de Acceso */}
-            <div className="bg-gradient-to-r from-[#9B6BFF]/10 to-[#4CC9A0]/10 rounded-lg p-4">
-              <h3 className="font-bold text-gray-900 mb-3">Códigos de acceso disponibles:</h3>
-              <div className="space-y-2">
-                <div className="bg-white rounded-lg p-3 font-mono text-sm text-center border-2 border-dashed border-[#9B6BFF]">
-                  WELLBEING2025
+            <div className="space-y-3">
+              <div className="bg-gradient-to-r from-[#9B6BFF]/10 to-[#4CC9A0]/10 rounded-lg p-4">
+                <h3 className="font-bold text-gray-900 mb-3">Códigos de empleado:</h3>
+                <div className="space-y-2">
+                  <div className="bg-white rounded-lg p-3 font-mono text-sm text-center border-2 border-dashed border-[#9B6BFF]">
+                    WELLBEING2025
+                  </div>
+                  <div className="bg-white rounded-lg p-3 font-mono text-sm text-center border-2 border-dashed border-[#9B6BFF]">
+                    MINDFUL24
+                  </div>
+                  <div className="bg-white rounded-lg p-3 font-mono text-sm text-center border-2 border-dashed border-[#9B6BFF]">
+                    HEALTH2025
+                  </div>
                 </div>
-                <div className="bg-white rounded-lg p-3 font-mono text-sm text-center border-2 border-dashed border-[#9B6BFF]">
-                  MINDFUL24
-                </div>
-                <div className="bg-white rounded-lg p-3 font-mono text-sm text-center border-2 border-dashed border-[#9B6BFF]">
-                  HEALTH2025
+              </div>
+
+              <div className="bg-gradient-to-r from-blue-500/10 to-[#9B6BFF]/10 rounded-lg p-4 border-2 border-blue-300">
+                <h3 className="font-bold text-blue-900 mb-3">Códigos de gerente (Dashboard Analytics):</h3>
+                <div className="space-y-2">
+                  <div className="bg-white rounded-lg p-3 font-mono text-sm text-center border-2 border-dashed border-blue-500 font-bold text-blue-700">
+                    MANAGER2025
+                  </div>
+                  <div className="bg-white rounded-lg p-3 font-mono text-sm text-center border-2 border-dashed border-blue-500 font-bold text-blue-700">
+                    ADMIN2025
+                  </div>
+                  <div className="bg-white rounded-lg p-3 font-mono text-sm text-center border-2 border-dashed border-blue-500 font-bold text-blue-700">
+                    LEADER2025
+                  </div>
                 </div>
               </div>
             </div>
