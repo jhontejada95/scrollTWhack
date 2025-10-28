@@ -1059,6 +1059,721 @@ Los archivos optimizados estarán en `/dist`
 
 ---
 
+## Casos de Uso Específicos
+
+### Caso de Uso #1: Registro de Nuevo Usuario
+
+**Actor:** Empleado nuevo de una empresa
+**Objetivo:** Crear una cuenta y activarla para poder realizar check-ins emocionales
+
+**Precondiciones:**
+- El usuario tiene un código de activación válido proporcionado por su empresa
+- El usuario tiene acceso a un navegador web
+
+**Flujo Principal:**
+1. El usuario accede a la aplicación TalentWell
+2. Hace clic en el botón "Registrarse"
+3. Completa el formulario con:
+   - Email corporativo (ejemplo: `juan.perez@empresa.com`)
+   - Contraseña segura (mínimo 6 caracteres)
+   - Código de activación (ejemplo: `DEMO2025`)
+4. El sistema valida que:
+   - El email no esté registrado previamente
+   - El código de activación existe en la base de datos
+   - El código no haya sido usado anteriormente
+5. El sistema crea el usuario en Supabase Auth
+6. El sistema marca el código como usado
+7. El sistema vincula al usuario con la empresa correspondiente
+8. El usuario es redirigido automáticamente al dashboard
+
+**Resultado Exitoso:**
+- Usuario creado exitosamente
+- Sesión iniciada automáticamente
+- Redirigido a la vista de Check-in
+- Mensaje mostrado: "Cuenta activada exitosamente. ¡Bienvenido a TalentWell!"
+
+**Errores Posibles:**
+
+| Error | Causa | Mensaje Mostrado |
+|-------|-------|------------------|
+| Código inválido | Código no existe en la BD | "Código de activación inválido" |
+| Código ya usado | Código ya fue utilizado | "Este código ya ha sido utilizado" |
+| Email duplicado | Email ya registrado | "Este email ya está registrado" |
+| Contraseña débil | Menos de 6 caracteres | "La contraseña debe tener al menos 6 caracteres" |
+| Error de red | Falla conexión Supabase | "Error de conexión. Intenta nuevamente" |
+
+**Tecnología Sugerida (Para Bolt):**
+```
+- Frontend: React + TypeScript
+- UI: Tailwind CSS con componentes de formulario
+- Autenticación: Supabase Auth (signUp)
+- Validación: React Hook Form + Zod
+- Estado: React Context API
+- Notificaciones: Toast notifications con Sonner
+```
+
+---
+
+### Caso de Uso #2: Inicio de Sesión
+
+**Actor:** Usuario registrado (Empleado o Gerente)
+**Objetivo:** Acceder a su cuenta para realizar check-ins o ver analytics
+
+**Precondiciones:**
+- El usuario tiene una cuenta previamente registrada y activada
+- El usuario conoce su email y contraseña
+
+**Flujo Principal:**
+1. El usuario accede a la aplicación TalentWell
+2. Introduce su email en el campo correspondiente
+3. Introduce su contraseña
+4. Hace clic en "Iniciar sesión"
+5. El sistema valida las credenciales en Supabase Auth
+6. El sistema recupera los datos del usuario (rol, empresa)
+7. El usuario es redirigido según su rol:
+   - Empleados: Vista de Check-in
+   - Gerentes: Dashboard de Analytics
+
+**Resultado Exitoso:**
+- Sesión iniciada correctamente
+- Token JWT almacenado en el navegador
+- Redirigido a la vista correspondiente
+- Navegación activada con opciones según el rol
+
+**Errores Posibles:**
+
+| Error | Causa | Mensaje Mostrado |
+|-------|-------|------------------|
+| Credenciales incorrectas | Email o contraseña inválidos | "Email o contraseña incorrectos" |
+| Cuenta no encontrada | Usuario no existe | "No existe una cuenta con este email" |
+| Cuenta inactiva | Activación pendiente | "Tu cuenta está pendiente de activación" |
+| Error de red | Falla conexión Supabase | "Error de conexión. Intenta nuevamente" |
+| Sesión expirada | Token JWT caducado | "Tu sesión ha expirado. Por favor inicia sesión nuevamente" |
+
+**Tecnología Sugerida (Para Bolt):**
+```
+- Frontend: React + TypeScript
+- Autenticación: Supabase Auth (signInWithPassword)
+- Persistencia: LocalStorage para token
+- Estado global: AuthContext con React Context
+- Protección de rutas: Private Route wrapper
+- Redirección: React Router v6
+```
+
+---
+
+### Caso de Uso #3: Realizar Check-in Emocional Diario
+
+**Actor:** Empleado autenticado
+**Objetivo:** Registrar su estado emocional del día y almacenarlo en blockchain
+
+**Precondiciones:**
+- El usuario ha iniciado sesión
+- No ha realizado un check-in en el día actual
+- Tiene MetaMask instalado
+- Tiene ETH de testnet en su wallet de Scroll Sepolia
+
+**Flujo Principal:**
+1. El usuario navega a la sección "Check-in"
+2. Visualiza cinco opciones emocionales con iconos:
+   - Excelente (100 puntos) - icono verde
+   - Bien (75 puntos) - icono verde claro
+   - Normal (50 puntos) - icono amarillo
+   - Estresado (40 puntos) - icono naranja
+   - Agotado (20 puntos) - icono rojo
+3. Selecciona el estado que mejor describe su día
+4. Opcionalmente, escribe un comentario (máximo 200 caracteres)
+5. Hace clic en "Enviar Check-in"
+6. El sistema genera un hash SHA-256 anónimo del registro
+7. El sistema guarda el check-in en la base de datos Supabase
+8. El sistema solicita conexión con MetaMask
+9. El usuario aprueba la conexión
+10. El sistema verifica que esté en Scroll Sepolia (si no, solicita cambio)
+11. El usuario aprueba el cambio de red (si es necesario)
+12. El sistema envía transacción al smart contract
+13. El usuario confirma la transacción en MetaMask (paga gas)
+14. El sistema espera confirmación de la transacción
+15. El sistema guarda el transaction hash en la base de datos
+16. Se muestra mensaje de éxito con panel de verificación blockchain
+
+**Resultado Exitoso:**
+- Check-in guardado en Supabase con ID único
+- Hash registrado en blockchain (contrato TalentWellRegistry)
+- Transaction hash guardado en la BD
+- Mensaje mostrado: "Check-in registrado exitosamente en blockchain"
+- Panel de verificación visible con:
+  - Hash anónimo (primeros 20 caracteres)
+  - Timestamp del registro
+  - Enlace al contrato en Scrollscan
+  - Enlace a la transacción en Scrollscan
+  - Botón "Verificar en Blockchain"
+
+**Errores Posibles:**
+
+| Error | Causa | Mensaje Mostrado |
+|-------|-------|------------------|
+| Check-in duplicado | Ya existe check-in hoy | "Ya has realizado tu check-in de hoy. Vuelve mañana para tu próximo check-in." |
+| MetaMask no instalado | Extensión no detectada | "MetaMask no está instalado. Por favor instala MetaMask para continuar." |
+| Usuario rechaza conexión | Usuario cancela en MetaMask | "Conexión rechazada. Necesitas conectar tu wallet para registrar el check-in." |
+| Red incorrecta | No está en Scroll Sepolia | "Por favor cambia a Scroll Sepolia Testnet en MetaMask" |
+| Usuario rechaza transacción | Usuario cancela en MetaMask | "Transacción cancelada. El check-in no fue registrado en blockchain." |
+| Fondos insuficientes | No hay ETH para gas | "Fondos insuficientes para pagar el gas. Obtén ETH de testnet desde el faucet." |
+| Transacción fallida | Error en el smart contract | "Error al registrar en blockchain. Por favor intenta nuevamente." |
+| Error de red | Falla RPC de Scroll | "Error de conexión con la red blockchain. Intenta nuevamente." |
+
+**Tecnología Sugerida (Para Bolt):**
+```
+- Frontend: React + TypeScript
+- Blockchain: Ethers.js v6 para Web3
+- Wallet: MetaMask (window.ethereum)
+- Base de datos: Supabase (insert + update)
+- Hashing: ethers.keccak256 para generar hash
+- Smart Contract: TalentWellRegistry en Scroll Sepolia
+- UI: Estados de loading con spinners
+- Feedback: Toast notifications + modal de confirmación
+```
+
+---
+
+### Caso de Uso #4: Verificar Check-in en Blockchain
+
+**Actor:** Empleado autenticado que ha realizado un check-in
+**Objetivo:** Verificar que su check-in existe en blockchain y consultar sus datos
+
+**Precondiciones:**
+- El usuario ha realizado un check-in previamente
+- El check-in fue registrado exitosamente en blockchain
+- Tiene MetaMask instalado y conectado
+
+**Flujo Principal:**
+1. El usuario visualiza su check-in del día con el panel de verificación
+2. Observa el hash anónimo y los enlaces al contrato
+3. Hace clic en el botón "Verificar en Blockchain"
+4. El sistema conecta con MetaMask (solo lectura, sin transacción)
+5. El sistema llama a la función `verifyCheckIn(hash)` del contrato
+6. El smart contract busca el hash en sus registros
+7. El smart contract retorna:
+   - exists: true
+   - timestamp: momento del registro
+   - score: puntuación emocional (20-100)
+8. El sistema muestra un mensaje de confirmación verde
+9. Se visualizan los datos verificados:
+   - Score original del check-in
+   - Timestamp de la blockchain
+   - Estado: "Verificado en Blockchain" con checkmark verde
+
+**Resultado Exitoso:**
+- Verificación exitosa mostrada con badge verde
+- Datos on-chain coinciden con datos en BD
+- Mensaje mostrado: "✓ Verificado en Blockchain"
+- Información adicional visible:
+  - Score: [puntuación]/100
+  - Timestamp: [fecha y hora formateada]
+  - Confirmación de inmutabilidad
+
+**Errores Posibles:**
+
+| Error | Causa | Mensaje Mostrado |
+|-------|-------|------------------|
+| Hash no encontrado | Check-in no existe on-chain | "Check-in no encontrado en blockchain. La transacción podría estar pendiente." |
+| MetaMask no conectado | Wallet desconectado | "Por favor conecta tu wallet MetaMask para verificar" |
+| Red incorrecta | No está en Scroll Sepolia | "Cambia a Scroll Sepolia Testnet para verificar" |
+| Error de RPC | Falla conexión blockchain | "Error al consultar blockchain. Intenta nuevamente." |
+| Transacción pendiente | Tx aún no confirmada | "La transacción está siendo procesada. Por favor espera unos segundos." |
+
+**Flujo Alternativo: Ver Transacción en Scrollscan**
+1. El usuario hace clic en "Ver transacción"
+2. Se abre nueva pestaña en Scrollscan
+3. Se muestra la página de la transacción con:
+   - Block number
+   - From address (wallet del usuario)
+   - To address (contrato TalentWellRegistry)
+   - Gas usado
+   - Timestamp
+   - Status: Success ✓
+   - Input Data (con el hash)
+
+**Tecnología Sugerida (Para Bolt):**
+```
+- Frontend: React + TypeScript
+- Blockchain: Ethers.js (solo lectura, no gas)
+- Smart Contract: Método view verifyCheckIn(bytes32)
+- UI: Loading state + success/error states
+- Enlaces externos: target="_blank" con noopener
+- Formato de datos: Date formatting con Intl
+```
+
+---
+
+### Caso de Uso #5: Visualizar Dashboard de Analytics (Gerente)
+
+**Actor:** Gerente autenticado
+**Objetivo:** Visualizar métricas agregadas de bienestar del equipo para tomar decisiones
+
+**Precondiciones:**
+- El usuario tiene rol de "manager"
+- Existen check-ins registrados en su empresa
+- Ha iniciado sesión correctamente
+
+**Flujo Principal:**
+1. El gerente inicia sesión o navega a "Analytics"
+2. El sistema consulta todos los check-ins de su empresa
+3. El sistema calcula métricas agregadas:
+   - Promedio actual de bienestar (0-100)
+   - Total de check-ins registrados
+   - Tendencia de últimos 30 días
+4. El sistema genera un gráfico de líneas con evolución diaria
+5. Se muestran tres tarjetas principales:
+   - **Card 1**: Promedio de bienestar (número grande + indicador visual)
+   - **Card 2**: Total de check-ins (contador + icono)
+   - **Card 3**: Tendencia (gráfico de línea + porcentaje)
+6. Se muestra gráfico interactivo con:
+   - Eje X: Fechas de los últimos 30 días
+   - Eje Y: Promedio de score (0-100)
+   - Línea de tendencia con colores según nivel
+7. El gerente puede:
+   - Ver tooltips al pasar el mouse sobre puntos
+   - Identificar días con bajos scores
+   - Observar patrones semanales o mensuales
+
+**Resultado Exitoso:**
+- Dashboard cargado con datos en tiempo real
+- Métricas calculadas correctamente:
+  - Promedio: 68/100 (ejemplo)
+  - Total check-ins: 245 (ejemplo)
+  - Tendencia: +5% última semana (ejemplo)
+- Gráfico renderizado correctamente
+- Colores indicativos:
+  - Verde: >70 puntos (bienestar alto)
+  - Amarillo: 50-70 (bienestar medio)
+  - Rojo: <50 (alerta, requiere atención)
+
+**Errores Posibles:**
+
+| Error | Causa | Mensaje Mostrado |
+|-------|-------|------------------|
+| Sin datos | No hay check-ins registrados | "No hay datos disponibles. Los empleados aún no han realizado check-ins." |
+| Acceso denegado | Usuario no es gerente | "No tienes permisos para acceder a esta sección. Solo gerentes pueden ver analytics." |
+| Error de consulta | Falla query a Supabase | "Error al cargar datos. Por favor recarga la página." |
+| Período sin datos | No hay check-ins en rango | "No hay datos para el período seleccionado." |
+
+**Flujo Alternativo: Filtrar por Período**
+1. El gerente selecciona un período diferente:
+   - Última semana
+   - Últimos 30 días (default)
+   - Últimos 90 días
+   - Todo el tiempo
+2. El sistema recalcula las métricas para el nuevo rango
+3. El gráfico se actualiza con la nueva información
+
+**Consideraciones de Privacidad:**
+- Los datos son agregados y anónimos
+- No se muestran check-ins individuales
+- No se pueden identificar empleados específicos
+- Solo promedios y tendencias grupales
+- Cumple con GDPR y regulaciones de privacidad
+
+**Tecnología Sugerida (Para Bolt):**
+```
+- Frontend: React + TypeScript
+- Gráficos: Recharts o Chart.js
+- Cálculos: JavaScript nativo para promedios
+- Query: Supabase con RLS (managers only)
+- Filtros: React State + useMemo para performance
+- UI: Tailwind CSS con componentes card
+- Loading: Skeleton loaders
+- Export: React-to-PDF (opcional)
+```
+
+---
+
+### Caso de Uso #6: Configurar MetaMask para Scroll Sepolia
+
+**Actor:** Nuevo usuario que va a realizar su primer check-in
+**Objetivo:** Configurar correctamente MetaMask para usar Scroll Sepolia Testnet
+
+**Precondiciones:**
+- El usuario tiene MetaMask instalado
+- El usuario intenta realizar un check-in por primera vez
+- No tiene Scroll Sepolia configurado
+
+**Flujo Principal:**
+1. El usuario hace clic en "Enviar Check-in"
+2. El sistema solicita conexión con MetaMask
+3. El usuario aprueba la conexión
+4. El sistema detecta que no está en Scroll Sepolia
+5. El sistema muestra modal: "Red incorrecta detectada"
+6. El sistema solicita automáticamente cambio de red
+7. Aparece popup de MetaMask con información de la red:
+   - Network Name: Scroll Sepolia Testnet
+   - RPC URL: https://sepolia-rpc.scroll.io
+   - Chain ID: 534351
+   - Currency Symbol: ETH
+   - Block Explorer: https://sepolia.scrollscan.com/
+8. El usuario hace clic en "Aprobar" en MetaMask
+9. La red se agrega automáticamente
+10. MetaMask cambia a la nueva red
+11. El sistema detecta el cambio exitoso
+12. El check-in procede normalmente
+
+**Resultado Exitoso:**
+- Red Scroll Sepolia agregada a MetaMask
+- Wallet conectado en la red correcta
+- Listo para realizar transacciones
+- Mensaje mostrado: "✓ Conectado a Scroll Sepolia Testnet"
+
+**Errores Posibles:**
+
+| Error | Causa | Mensaje Mostrado |
+|-------|-------|------------------|
+| Usuario rechaza | Cancela en MetaMask | "Cambio de red cancelado. Necesitas estar en Scroll Sepolia para continuar." |
+| MetaMask bloqueado | Wallet con contraseña | "Desbloquea MetaMask para continuar" |
+| Configuración manual | Rechazo automático | "Por favor configura Scroll Sepolia manualmente en MetaMask. [Mostrar instrucciones]" |
+
+**Flujo Alternativo: Configuración Manual**
+1. El usuario rechaza la configuración automática
+2. El sistema muestra instrucciones paso a paso:
+   ```
+   1. Abre MetaMask
+   2. Click en el selector de red
+   3. Click en "Agregar red"
+   4. Click en "Agregar red manualmente"
+   5. Completa los siguientes datos:
+      - Network Name: Scroll Sepolia Testnet
+      - RPC URL: https://sepolia-rpc.scroll.io
+      - Chain ID: 534351
+      - Currency Symbol: ETH
+      - Block Explorer: https://sepolia.scrollscan.com/
+   6. Click en "Guardar"
+   7. Selecciona la nueva red
+   ```
+3. Una vez configurado, el usuario vuelve a intentar el check-in
+
+**Tecnología Sugerida (Para Bolt):**
+```
+- Web3: Ethers.js para detectar red
+- MetaMask API: wallet_addEthereumChain
+- UI: Modal con instrucciones claras
+- Validación: Chain ID comparison
+- Feedback: Visual indicators de conexión
+```
+
+---
+
+### Caso de Uso #7: Obtener ETH de Testnet (Faucet)
+
+**Actor:** Usuario que necesita ETH para transacciones
+**Objetivo:** Obtener ETH gratuito de testnet para pagar gas fees
+
+**Precondiciones:**
+- El usuario tiene MetaMask configurado en Scroll Sepolia
+- No tiene suficiente ETH para realizar transacciones
+- Tiene acceso a internet
+
+**Flujo Principal:**
+1. El usuario intenta realizar un check-in
+2. MetaMask muestra error: "Fondos insuficientes"
+3. El sistema detecta el error y muestra mensaje:
+   "No tienes suficiente ETH para pagar el gas. [Obtener ETH gratis]"
+4. El usuario hace clic en el enlace
+5. Se abre nueva pestaña con el faucet de Scroll Sepolia
+6. El usuario conecta su wallet en el faucet
+7. El usuario hace clic en "Request ETH" o similar
+8. El faucet procesa la solicitud (puede requerir CAPTCHA)
+9. El faucet envía 0.1 - 0.5 ETH a la wallet del usuario
+10. El usuario espera la confirmación (15-30 segundos)
+11. El balance se actualiza en MetaMask
+12. El usuario vuelve a TalentWell
+13. Intenta nuevamente el check-in (ahora con fondos suficientes)
+
+**Resultado Exitoso:**
+- ETH recibido en la wallet (visible en MetaMask)
+- Balance actualizado
+- Listo para realizar transacciones
+- Puede completar su check-in sin problemas
+
+**Errores Posibles:**
+
+| Error | Causa | Mensaje Mostrado |
+|-------|-------|------------------|
+| Límite diario alcanzado | Ya usó faucet hoy | "Has alcanzado el límite diario del faucet. Intenta mañana." |
+| Faucet no disponible | Servicio caído | "El faucet no está disponible temporalmente. Intenta más tarde." |
+| Wallet ya financiada | Ya tiene suficiente ETH | "Tu wallet ya tiene suficiente ETH." |
+
+**Recursos del Faucet:**
+- URL Principal: https://sepolia.scroll.io/faucet
+- Alternativas: https://scroll-sepolia-faucet.com
+- Discord: Solicitar en canal de faucet de Scroll
+
+**Tecnología Sugerida (Para Bolt):**
+```
+- Detección: Catch error "insufficient funds"
+- UI: Link directo al faucet en mensajes de error
+- Ayuda: Tooltip con instrucciones del faucet
+- Validación: Polling de balance cada 5 segundos
+- Notificación: Alert cuando balance cambia
+```
+
+---
+
+### Caso de Uso #8: Recuperar Contraseña
+
+**Actor:** Usuario que olvidó su contraseña
+**Objetivo:** Restablecer su contraseña para acceder a su cuenta
+
+**Precondiciones:**
+- El usuario tiene una cuenta registrada
+- Tiene acceso al email registrado
+
+**Flujo Principal:**
+1. El usuario está en la pantalla de inicio de sesión
+2. Hace clic en "¿Olvidaste tu contraseña?"
+3. Se muestra formulario de recuperación
+4. Introduce su email registrado
+5. Hace clic en "Enviar enlace de recuperación"
+6. El sistema valida que el email existe
+7. Supabase Auth envía email con enlace mágico
+8. El usuario revisa su email
+9. Hace clic en el enlace de recuperación
+10. Es redirigido a página de nueva contraseña
+11. Introduce su nueva contraseña (2 veces para confirmar)
+12. Hace clic en "Actualizar contraseña"
+13. El sistema valida y actualiza la contraseña
+14. El usuario es redirigido a login
+15. Puede iniciar sesión con la nueva contraseña
+
+**Resultado Exitoso:**
+- Email de recuperación enviado
+- Mensaje mostrado: "Revisa tu email. Hemos enviado un enlace para restablecer tu contraseña."
+- Contraseña actualizada exitosamente
+- Mensaje mostrado: "Contraseña actualizada correctamente. Ya puedes iniciar sesión."
+
+**Errores Posibles:**
+
+| Error | Causa | Mensaje Mostrado |
+|-------|-------|------------------|
+| Email no encontrado | No existe cuenta | "No existe una cuenta con este email" |
+| Email no enviado | Error SMTP | "Error al enviar el email. Intenta nuevamente." |
+| Enlace expirado | Pasaron más de 1 hora | "Este enlace ha expirado. Solicita uno nuevo." |
+| Contraseñas no coinciden | Campos diferentes | "Las contraseñas no coinciden" |
+| Contraseña débil | Menos de 6 caracteres | "La contraseña debe tener al menos 6 caracteres" |
+
+**Tecnología Sugerida (Para Bolt):**
+```
+- Autenticación: Supabase Auth (resetPasswordForEmail)
+- Email: Configuración de templates en Supabase
+- UI: Formulario con validación en tiempo real
+- Redirección: Manejo de magic link callback
+- Seguridad: Rate limiting para prevenir spam
+```
+
+---
+
+### Caso de Uso #9: Cerrar Sesión
+
+**Actor:** Usuario autenticado (Empleado o Gerente)
+**Objetivo:** Salir de su cuenta de forma segura
+
+**Precondiciones:**
+- El usuario ha iniciado sesión
+- Tiene sesión activa
+
+**Flujo Principal:**
+1. El usuario hace clic en su avatar/nombre en la barra de navegación
+2. Aparece dropdown con opciones
+3. Hace clic en "Cerrar sesión"
+4. El sistema llama a `supabase.auth.signOut()`
+5. El sistema limpia el token JWT del navegador
+6. El sistema limpia el estado global de autenticación
+7. El sistema desconecta MetaMask (opcional)
+8. El usuario es redirigido a la pantalla de login
+9. Se muestra mensaje: "Sesión cerrada exitosamente"
+
+**Resultado Exitoso:**
+- Sesión cerrada correctamente
+- Token eliminado de LocalStorage
+- Usuario redirigido a login
+- Estado global limpio
+- Ya no puede acceder a rutas protegidas
+
+**Errores Posibles:**
+
+| Error | Causa | Mensaje Mostrado |
+|-------|-------|------------------|
+| Error de red | Falla conexión Supabase | "Error al cerrar sesión. Intenta nuevamente." |
+| Sesión ya cerrada | Token ya expiró | Usuario simplemente redirigido a login sin mensaje |
+
+**Tecnología Sugerida (Para Bolt):**
+```
+- Autenticación: Supabase Auth (signOut)
+- Estado: Limpieza de AuthContext
+- Almacenamiento: Clear LocalStorage
+- Redirección: React Router navigate
+- UI: Dropdown menu con Headless UI
+```
+
+---
+
+### Caso de Uso #10: Manejar Error de Sesión Expirada
+
+**Actor:** Usuario con sesión activa que expira
+**Objetivo:** Manejar gracefully la expiración y reautenticar
+
+**Precondiciones:**
+- El usuario ha iniciado sesión
+- Han pasado más de 24 horas desde el login
+- El JWT ha expirado
+
+**Flujo Principal:**
+1. El usuario está usando la aplicación
+2. Intenta realizar una acción (ej: check-in)
+3. El sistema detecta que el token JWT expiró
+4. El sistema muestra modal: "Tu sesión ha expirado"
+5. El usuario hace clic en "Iniciar sesión nuevamente"
+6. Es redirigido a la pantalla de login
+7. Inicia sesión con sus credenciales
+8. Es redirigido de vuelta a donde estaba
+9. Puede continuar su acción original
+
+**Resultado Exitoso:**
+- Detección automática de sesión expirada
+- Usuario informado claramente
+- Proceso de reautenticación fluido
+- Vuelta a la acción original sin pérdida de contexto
+
+**Errores Posibles:**
+
+| Error | Causa | Mensaje Mostrado |
+|-------|-------|------------------|
+| Credenciales incorrectas al relogin | Usuario olvidó contraseña | "Email o contraseña incorrectos" (con link a recuperación) |
+
+**Tecnología Sugerida (Para Bolt):**
+```
+- Detección: Axios/Fetch interceptor para 401
+- UI: Modal de sesión expirada
+- Persistencia: Guardar ruta actual antes de redirigir
+- Reautenticación: Supabase Auth
+- Redirección: Volver a ruta guardada post-login
+```
+
+---
+
+## Tecnología Sugerida General para Bolt
+
+### Stack Recomendado
+
+**Frontend Core:**
+```
+- Framework: React 18.3 con TypeScript 5.5
+- Build Tool: Vite 5.4 (ultra rápido)
+- Router: React Router v6
+- Estado: Context API + hooks
+- Formularios: React Hook Form
+- Validación: Zod
+```
+
+**UI/UX:**
+```
+- CSS: Tailwind CSS 3.4
+- Componentes: Headless UI (accessible)
+- Iconos: Lucide React
+- Animaciones: Framer Motion
+- Notificaciones: Sonner o React Hot Toast
+- Modales: Radix UI
+- Gráficos: Recharts o Chart.js
+```
+
+**Backend & Database:**
+```
+- BaaS: Supabase (PostgreSQL + Auth + Storage)
+- ORM: Supabase Client JS
+- Autenticación: Supabase Auth
+- Seguridad: Row Level Security (RLS)
+```
+
+**Blockchain:**
+```
+- Librería Web3: Ethers.js v6
+- Wallet: MetaMask integration
+- Red: Scroll Sepolia Testnet (L2)
+- Smart Contract: Solidity 0.8.20
+- IDE: Remix para deployment
+```
+
+**Developer Experience:**
+```
+- Linting: ESLint + TypeScript ESLint
+- Formatting: Prettier
+- Git Hooks: Husky + lint-staged
+- Testing: Vitest + React Testing Library
+- E2E: Playwright (opcional)
+```
+
+**Deployment:**
+```
+- Hosting: Vercel, Netlify o Cloudflare Pages
+- CI/CD: GitHub Actions
+- Environment: .env con Vite
+- Build: npm run build (optimizado)
+```
+
+### Mensajes de Éxito y Error Existentes en la Aplicación
+
+#### Mensajes de Éxito ✅
+
+| Componente | Acción | Mensaje |
+|------------|--------|---------|
+| AuthForm (SignUp) | Registro exitoso | "Cuenta activada exitosamente. ¡Bienvenido a TalentWell!" |
+| AuthForm (Login) | Login exitoso | Sin mensaje, redirección directa |
+| CheckInForm | Check-in guardado | "Check-in registrado exitosamente en blockchain" |
+| CheckInForm | Check-in duplicado | "Ya has realizado tu check-in de hoy. Vuelve mañana para tu próximo check-in." |
+| BlockchainVerification | Verificación exitosa | "✓ Verificado en Blockchain" |
+| ActivationFlow | Código validado | "Código válido. Procede con tu registro." |
+
+#### Mensajes de Error ❌
+
+| Componente | Error | Mensaje |
+|------------|-------|---------|
+| AuthForm | Email duplicado | "Este email ya está registrado" |
+| AuthForm | Código inválido | "Código de activación inválido" |
+| AuthForm | Código usado | "Este código ya ha sido utilizado" |
+| AuthForm | Credenciales incorrectas | "Email o contraseña incorrectos" |
+| AuthForm | Error genérico | "Error al iniciar sesión. Intenta nuevamente" |
+| CheckInForm | Check-in duplicado | "Ya has realizado tu check-in de hoy" |
+| CheckInForm | Error de guardado | "Error al registrar check-in" |
+| BlockchainVerification | Hash no encontrado | "Check-in no encontrado en blockchain" |
+| BlockchainVerification | Error de verificación | "Error al verificar" |
+| Web3 Connection | MetaMask no instalado | "MetaMask no está instalado" |
+| Web3 Connection | Usuario rechaza | "Conexión rechazada" |
+| Web3 Connection | Fondos insuficientes | "Fondos insuficientes para pagar el gas" |
+| Web3 Connection | Transacción fallida | "Error al registrar en blockchain" |
+| Dashboard | Sin datos | "No hay datos disponibles" |
+| Dashboard | Error de carga | "Error al cargar datos" |
+
+#### Colores de Mensajes (Tailwind CSS)
+
+**Éxito (Verde):**
+```css
+bg-green-50 border-green-200 text-green-700
+```
+
+**Error (Rojo):**
+```css
+bg-red-50 border-red-200 text-red-600
+```
+
+**Advertencia (Amarillo):**
+```css
+bg-yellow-50 border-yellow-200 text-yellow-800
+```
+
+**Información (Azul):**
+```css
+bg-blue-50 border-blue-200 text-blue-700
+```
+
+---
+
 ## Licencia
 
 MIT License - Ver archivo LICENSE para más detalles.
