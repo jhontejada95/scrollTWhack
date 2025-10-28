@@ -1,5 +1,7 @@
 # TalentWell - Plataforma de Bienestar Emocional con Blockchain
 
+URL_DEMO: https://talentwell-stress-bu-y4wx.bolt.host/
+
 TalentWell es una aplicación web que permite a las empresas monitorear el bienestar emocional de sus empleados de forma segura, anónima y verificable mediante tecnología blockchain. Los registros de check-ins emocionales se almacenan tanto en base de datos como en blockchain (Scroll Sepolia), garantizando transparencia e inmutabilidad.
 
 ## Tabla de Contenidos
