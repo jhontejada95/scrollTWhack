@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase, EmotionType, CheckIn } from '../lib/supabase';
 import { generateBlockchainHash, getEmotionScore } from '../lib/blockchain';
+import { registerCheckInOnChain } from '../lib/web3';
 import { BlockchainVerification } from './BlockchainVerification';
 import { Smile, Meh, Frown, AlertTriangle, TrendingDown, CheckCircle, AlertCircle } from 'lucide-react';
 
@@ -62,15 +63,19 @@ export function CheckInForm() {
         timestamp,
       });
 
-      const { error: insertError } = await supabase.from('check_ins').insert({
-        user_id: user.id,
-        company_id: user.company_id,
-        emotion: selectedEmotion,
-        score,
-        comment: comment.trim(),
-        blockchain_hash: blockchainHash,
-        date: new Date().toISOString().split('T')[0],
-      });
+      const { data: checkInData, error: insertError } = await supabase
+        .from('check_ins')
+        .insert({
+          user_id: user.id,
+          company_id: user.company_id,
+          emotion: selectedEmotion,
+          score,
+          comment: comment.trim(),
+          blockchain_hash: blockchainHash,
+          date: new Date().toISOString().split('T')[0],
+        })
+        .select()
+        .single();
 
       if (insertError) {
         if (insertError.code === '23505') {
@@ -81,8 +86,19 @@ export function CheckInForm() {
         return;
       }
 
+      const blockchainResult = await registerCheckInOnChain(blockchainHash, score);
+
+      if (blockchainResult.success && checkInData) {
+        await supabase
+          .from('check_ins')
+          .update({ blockchain_tx_hash: blockchainResult.txHash })
+          .eq('id', checkInData.id);
+      }
+
       setSuccess(true);
       setHasCheckedInToday(true);
+      await checkTodayCheckIn();
+
       setTimeout(() => {
         setSuccess(false);
         setSelectedEmotion(null);
