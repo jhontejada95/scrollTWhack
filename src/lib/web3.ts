@@ -1,4 +1,5 @@
 import { ethers } from 'ethers';
+import { CONTRACT_ADDRESS, CONTRACT_ABI } from './contract';
 
 export const SCROLL_SEPOLIA_RPC = 'https://sepolia-rpc.scroll.io';
 export const SCROLL_SEPOLIA_CHAIN_ID = 534351;
@@ -20,23 +21,71 @@ export async function connectToScrollSepolia(): Promise<ethers.JsonRpcProvider |
   }
 }
 
-export async function storeHashOnChain(
+export async function registerCheckInOnChain(
   hash: string,
-  provider: ethers.JsonRpcProvider,
-  signer: ethers.Signer
-): Promise<string | null> {
+  score: number
+): Promise<{ success: boolean; txHash?: string; error?: string }> {
   try {
-    const tx = await signer.sendTransaction({
-      to: signer.getAddress(),
-      value: 0,
-      data: ethers.hexlify(ethers.toUtf8Bytes(hash)),
-    });
+    if (CONTRACT_ADDRESS === "0x0000000000000000000000000000000000000000") {
+      return {
+        success: false,
+        error: "Contract not deployed. Please deploy the contract and update CONTRACT_ADDRESS in src/lib/contract.ts"
+      };
+    }
 
+    const provider = await getWalletConnection();
+    if (!provider) {
+      return { success: false, error: "Failed to connect wallet" };
+    }
+
+    const signer = await provider.getSigner();
+    const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+
+    const hashBytes32 = ethers.keccak256(ethers.toUtf8Bytes(hash));
+    const tx = await contract.registerCheckIn(hashBytes32, score);
     const receipt = await tx.wait();
-    return receipt?.hash || null;
-  } catch (error) {
-    console.error('Failed to store hash on chain:', error);
-    return null;
+
+    return {
+      success: true,
+      txHash: receipt?.hash
+    };
+  } catch (error: any) {
+    console.error('Failed to register check-in on chain:', error);
+    return {
+      success: false,
+      error: error.message || 'Unknown error'
+    };
+  }
+}
+
+export async function verifyCheckInOnChain(
+  hash: string
+): Promise<{ exists: boolean; timestamp?: number; score?: number; error?: string }> {
+  try {
+    if (CONTRACT_ADDRESS === "0x0000000000000000000000000000000000000000") {
+      return {
+        exists: false,
+        error: "Contract not deployed"
+      };
+    }
+
+    const provider = new ethers.JsonRpcProvider(SCROLL_SEPOLIA_RPC);
+    const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
+
+    const hashBytes32 = ethers.keccak256(ethers.toUtf8Bytes(hash));
+    const [exists, timestamp, score] = await contract.verifyCheckIn(hashBytes32);
+
+    return {
+      exists,
+      timestamp: Number(timestamp),
+      score: Number(score)
+    };
+  } catch (error: any) {
+    console.error('Failed to verify check-in on chain:', error);
+    return {
+      exists: false,
+      error: error.message || 'Unknown error'
+    };
   }
 }
 
